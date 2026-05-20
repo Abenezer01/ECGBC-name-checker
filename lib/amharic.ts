@@ -5,9 +5,12 @@ const amharicStopwords = new Set([
   'ወንጌላዊት',
   'አጥቢያ',
   'ሚኒስትሪ',
+  'ሚኒስትሪስ',
+  'ሚንስትሪ',
   'ማህበር',
   'አገልግሎት',
   'ዓለም',
+  'አለም',
   'አቀፍ',
   'ኢንተርናሽናል',
   'ሙሉ',
@@ -22,8 +25,10 @@ const amharicStopwords = new Set([
   'ከ',
   'ት/ቤት',
   'ማዕከል',
+  'ማእከል',
   'መካነ',
   'ኢየሱስ',
+  'እየሱስ',
   'ፕሮቴስታንት',
   'ካቶሊክ',
   'ኦርቶዶክስ',
@@ -32,8 +37,23 @@ const amharicStopwords = new Set([
   'ወረዳ',
   'ክፍለ',
   'ከተማ',
-  'ቀበሌ'
+  'ቀበሌ',
+  'ዘ',
+  'ኦፍ'
 ]);
+
+const amharicSynonyms: Record<string, string> = {
+  'መ ክ አ': 'መሰረተ ክርስቶስ',
+  'መክአ': 'መሰረተ ክርስቶስ',
+  'ቃ ሕ ቤ': 'ቃለ ህይወት',
+  'ቃሕቤ': 'ቃለ ህይወት',
+  'ሙሉወንጌል': 'ሙሉ ወንጌል',
+  'ሙ ወ': 'ሙሉ ወንጌል',
+  'ሕይወት': 'ህይወት',
+  'ብርሃን': 'ብርሀን',
+  'ሐዋርያት': 'ሀዋርያት',
+  'ሐዋርያዊት': 'ሀዋርያዊት',
+};
 
 export function normalizeAmharic(text: string): string {
   if (!text) return '';
@@ -49,16 +69,26 @@ export function normalizeAmharic(text: string): string {
     'ሠ': 'ሰ', 'ሡ': 'ሱ', 'ሢ': 'ሲ', 'ሣ': 'ሳ', 'ሤ': 'ሴ', 'ሥ': 'ስ', 'ሦ': 'ሶ',
     // Tse variations
     'ፀ': 'ጸ', 'ፁ': 'ጹ', 'ፂ': 'ጺ', 'ፃ': 'ጻ', 'ፄ': 'ጼ', 'ፅ': 'ጽ', 'ፆ': 'ጾ',
-    // A variations
+    // A variations (map 'ዐ' class to 'አ' equivalent, and also handling 4th order confusion occasionally but sticking to sound matching)
     'ዐ': 'አ', 'ዑ': 'ኡ', 'ዒ': 'ኢ', 'ዓ': 'ኣ', 'ዔ': 'ኤ', 'ዕ': 'እ', 'ዖ': 'ኦ',
+    // Often confused combinations
+    'ዉ': 'ው',
+    'ዪ': 'ይ',
   };
   
-  // Punctuation characters to remove
-  // Ethiopic wordspace (፡) comma (፣) fullstop (።) etc.
-  n = n.replace(/[፡፤፥-፧፨\.,!\?]/g, ' ');
-  
+  // Punctuation characters to remove, robustly
+  // Ethiopic wordspace (፡) comma (፣) fullstop (።) etc + ascii punctuation
+  n = n.replace(/[፡፤፥-፧፨\.,!\?\/\\(\)\[\]"\'`]/g, ' ');
+
   // Apply character mapping
   n = n.split('').map(c => map[c] || c).join('');
+
+  // Apply synonyms (handling abbreviations explicitly)
+  for (const [key, val] of Object.entries(amharicSynonyms)) {
+    if (n.includes(key)) {
+      n = n.split(key).join(val);
+    }
+  }
   
   // Remove stopwords
   n = n.split(/\s+/).filter(w => !amharicStopwords.has(w)).join(' ');
