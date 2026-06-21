@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useMemo } from 'react';
-import { Upload, FileUp, Settings, Activity, FileDown, CheckCircle2, AlertTriangle, ShieldCheck, Search, Filter, Download, Database, Trash2, UserPlus, Plus, Menu, X, Wifi, WifiOff, Users, Calendar, LayoutGrid, User as UserIcon, Phone, MapPin } from 'lucide-react';
+import { Upload, FileUp, Settings, Activity, FileDown, CheckCircle2, AlertTriangle, ShieldCheck, Search, Filter, Download, Database, Trash2, UserPlus, Plus, Menu, X, Wifi, WifiOff, Users, Calendar, LayoutGrid, User as UserIcon, Phone, MapPin, Code } from 'lucide-react';
 import { Card, Button, ProgressBar, Badge, cn } from '@/components/ui/components';
 import { parseFile, downloadCSV, downloadExcel } from '@/lib/file_parser';
 import { runAnalysisWorker } from '@/workers/analysis.worker';
@@ -932,6 +932,13 @@ export default function DashboardClient({ role }: { role: string | null }) {
               <Calendar className="h-4 w-4" />
               <span>Bookings</span>
             </button>
+            <a 
+              href="/api-docs"
+              className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 cursor-pointer text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+            >
+              <Code className="h-4 w-4" />
+              <span>API Docs</span>
+            </a>
           </div>
 
           {/* admin Section - Rendered Side-by-Side but distinct */}
@@ -1084,6 +1091,13 @@ export default function DashboardClient({ role }: { role: string | null }) {
               <Calendar className="h-4 w-4 shrink-0" />
               <span>Online Bookings</span>
             </button>
+            <a 
+              href="/api-docs"
+              className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all cursor-pointer text-slate-600 dark:text-slate-400 hover:bg-slate-100/60 dark:hover:bg-slate-800/40"
+            >
+              <Code className="h-4 w-4 shrink-0" />
+              <span>API Docs</span>
+            </a>
           </div>
 
           {role === 'admin' && (
