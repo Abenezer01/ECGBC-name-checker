@@ -977,6 +977,14 @@ export default function DashboardClient({ role }: { role: string | null }) {
                   <Settings className="h-4 w-4" />
                   <span>Roles</span>
                 </button>
+                <a 
+                  href="/api-docs"
+                  target="_blank"
+                  className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium text-slate-600 hover:text-indigo-700 hover:bg-indigo-50/50 transition-all duration-200"
+                >
+                  <Search className="h-4 w-4" />
+                  <span>API Docs</span>
+                </a>
               </div>
             </>
           )}
@@ -1122,6 +1130,15 @@ export default function DashboardClient({ role }: { role: string | null }) {
                 <Settings className="h-4 w-4 shrink-0" />
                 <span>Roles</span>
               </button>
+
+              <a 
+                href="/api-docs"
+                target="_blank"
+                className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold text-indigo-600 hover:bg-indigo-50/50 transition-all cursor-pointer"
+              >
+                <Search className="h-4 w-4 shrink-0" />
+                <span>API Docs</span>
+              </a>
             </div>
           )}
 

@@ -5,6 +5,19 @@ import { levenshteinSimilarity, tokenJaccardSimilarity, getTrigrams } from '@/li
 
 export const dynamic = 'force-dynamic';
 
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+};
+
+export async function OPTIONS(request: NextRequest) {
+  return new NextResponse(null, {
+    status: 204,
+    headers: corsHeaders
+  });
+}
+
 // A simple English normalizer
 function normalizeEnglish(text: string): string {
   if (!text) return '';
@@ -43,11 +56,11 @@ export async function POST(req: NextRequest) {
     const { name, category } = await req.json();
 
     if (!name || typeof name !== 'string') {
-      return NextResponse.json({ error: 'Name is required' }, { status: 400 });
+      return NextResponse.json({ error: 'Name is required' }, { status: 400, headers: corsHeaders });
     }
 
     if (!category || !['church', 'ministry'].includes(category)) {
-      return NextResponse.json({ error: 'Valid category (church or ministry) is required' }, { status: 400 });
+      return NextResponse.json({ error: 'Valid category (church or ministry) is required' }, { status: 400, headers: corsHeaders });
     }
 
     const supabase = getServiceSupabase();
@@ -61,7 +74,7 @@ export async function POST(req: NextRequest) {
 
     if (error) {
        console.error("Supabase search error:", error);
-       return NextResponse.json({ error: error.message }, { status: 500 });
+       return NextResponse.json({ error: error.message }, { status: 500, headers: corsHeaders });
     }
 
     let exactMatchFound = false;
@@ -128,9 +141,9 @@ export async function POST(req: NextRequest) {
       query: { name, category },
       exactMatchFound,
       candidates: finalCandidates
-    });
+    }, { headers: corsHeaders });
 
   } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: error.message }, { status: 500, headers: corsHeaders });
   }
 }
