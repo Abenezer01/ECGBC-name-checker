@@ -31,11 +31,13 @@ function normalizeEnglish(text: string): string {
 function calculateScore(masterCandidate: any, aNorm: any) {
      const masterAm = masterCandidate.normalizedAm;
      const masterEn = masterCandidate.normalizedEn;
-     const masterTranslit = transliterateAmharic(masterAm);
+     // If masterAm has text, we transliterate it to Latin. If not, fallback to empty string.
+     const masterTranslit = transliterateAmharic(masterAm || '');
      
      const appAm = aNorm.normalizedAm;
      const appEn = aNorm.normalizedEn;
-     const appTranslit = transliterateAmharic(appAm);
+     // Transliterate app Amharic text to Latin
+     const appTranslit = transliterateAmharic(appAm || '');
 
      const strSimAm = appAm && masterAm ? levenshteinSimilarity(appAm, masterAm) : 0;
      const strSimEn = appEn && masterEn ? levenshteinSimilarity(appEn, masterEn) : 0;
@@ -53,7 +55,17 @@ function calculateScore(masterCandidate: any, aNorm: any) {
      const tgSimEn = appEn && masterEn ? trigramDiceSimilarity(getTrigrams(appEn), getTrigrams(masterEn)) : 0;
      const bestTgSim = Math.max(tgSimAm, tgSimEn);
 
-     const translitSim = appTranslit && masterTranslit ? levenshteinSimilarity(appTranslit, masterTranslit) : 0;
+     // Cross-lingual match: compare Amharic transliteration to English text
+     const translitSimAm2Am = appTranslit && masterTranslit ? levenshteinSimilarity(appTranslit, masterTranslit) : 0;
+     const translitSimAm2En = appTranslit && masterEn ? levenshteinSimilarity(appTranslit, masterEn) : 0;
+     const translitSimEn2Am = appEn && masterTranslit ? levenshteinSimilarity(appEn, masterTranslit) : 0;
+     const bestTranslitSim = Math.max(translitSimAm2Am, translitSimAm2En, translitSimEn2Am);
+
+     // Trigrams cross-lingual
+     const tgTranslitAm2En = appTranslit && masterEn ? trigramDiceSimilarity(getTrigrams(appTranslit), getTrigrams(masterEn)) : 0;
+     const tgTranslitEn2Am = appEn && masterTranslit ? trigramDiceSimilarity(getTrigrams(appEn), getTrigrams(masterTranslit)) : 0;
+     const tgTranslitAm2Am = appTranslit && masterTranslit ? trigramDiceSimilarity(getTrigrams(appTranslit), getTrigrams(masterTranslit)) : 0;
+     const bestTgTranslitSim = Math.max(tgTranslitAm2En, tgTranslitEn2Am, tgTranslitAm2Am);
 
      // 1. Exact Match Rule
      if (bestStrSim === 100) {
@@ -67,11 +79,17 @@ function calculateScore(masterCandidate: any, aNorm: any) {
 
      // 3. Base blended score
      let finalScore = Math.max(
-         bestTgSim * 0.90 + translitSim * 0.10, // Trigram handles reordering, misspelling, and missing words gracefully
+         bestTgSim * 0.90, 
          bestTokenSim > bestStrSim 
-            ? (bestTokenSim * 0.70) + (bestStrSim * 0.20) + (translitSim * 0.10)
-            : (bestStrSim * 0.55) + (bestTokenSim * 0.35) + (translitSim * 0.10)
+            ? (bestTokenSim * 0.70) + (bestStrSim * 0.20)
+            : (bestStrSim * 0.55) + (bestTokenSim * 0.35)
      );
+     
+     // Incorporate cross-lingual transliteration matches if they are stronger than the direct matches
+     if (bestTranslitSim > finalScore || bestTgTranslitSim > finalScore) {
+         const translitBlendedScore = Math.max(bestTgTranslitSim * 0.90, bestTranslitSim * 0.85);
+         finalScore = Math.max(finalScore, translitBlendedScore);
+     }
 
      if (bestTgSim >= 85 && bestTokenSim < 100) {
          finalScore = Math.max(finalScore, bestTgSim);
