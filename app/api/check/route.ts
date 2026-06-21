@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServiceSupabase } from '@/lib/supabase';
 import { normalizeAmharic, transliterateAmharic } from '@/lib/amharic';
-import { levenshteinSimilarity, tokenJaccardSimilarity, getTrigrams } from '@/lib/similarity';
+import { levenshteinSimilarity, tokenJaccardSimilarity, getTrigrams, trigramDiceSimilarity, tokenSubsetSimilarity } from '@/lib/similarity';
 
 export const dynamic = 'force-dynamic';
 
@@ -29,26 +29,60 @@ function normalizeEnglish(text: string): string {
 }
 
 function calculateScore(masterCandidate: any, aNorm: any) {
-  const masterAm = masterCandidate.normalizedAm;
-  const masterEn = masterCandidate.normalizedEn;
-  const masterTranslit = transliterateAmharic(masterAm);
-  
-  const appAm = aNorm.normalizedAm;
-  const appEn = aNorm.normalizedEn;
-  const appTranslit = transliterateAmharic(appAm);
+     const masterAm = masterCandidate.normalizedAm;
+     const masterEn = masterCandidate.normalizedEn;
+     const masterTranslit = transliterateAmharic(masterAm);
+     
+     const appAm = aNorm.normalizedAm;
+     const appEn = aNorm.normalizedEn;
+     const appTranslit = transliterateAmharic(appAm);
 
-  const strSimAm = appAm && masterAm ? levenshteinSimilarity(appAm, masterAm) : 0;
-  const strSimEn = appEn && masterEn ? levenshteinSimilarity(appEn, masterEn) : 0;
-  const bestStrSim = Math.max(strSimAm, strSimEn);
+     const strSimAm = appAm && masterAm ? levenshteinSimilarity(appAm, masterAm) : 0;
+     const strSimEn = appEn && masterEn ? levenshteinSimilarity(appEn, masterEn) : 0;
+     const bestStrSim = Math.max(strSimAm, strSimEn);
 
-  const tokenSimAm = appAm && masterAm ? tokenJaccardSimilarity(appAm, masterAm) : 0;
-  const tokenSimEn = appEn && masterEn ? tokenJaccardSimilarity(appEn, masterEn) : 0;
-  const bestTokenSim = Math.max(tokenSimAm, tokenSimEn);
+     const tokenSimAm = appAm && masterAm ? tokenJaccardSimilarity(appAm, masterAm) : 0;
+     const tokenSimEn = appEn && masterEn ? tokenJaccardSimilarity(appEn, masterEn) : 0;
+     const bestTokenSim = Math.max(tokenSimAm, tokenSimEn);
 
-  const translitSim = appTranslit && masterTranslit ? levenshteinSimilarity(appTranslit, masterTranslit) : 0;
+     const subsetSimAm = appAm && masterAm ? tokenSubsetSimilarity(appAm, masterAm) : 0;
+     const subsetSimEn = appEn && masterEn ? tokenSubsetSimilarity(appEn, masterEn) : 0;
+     const bestSubsetSim = Math.max(subsetSimAm, subsetSimEn);
 
-  const finalScore = (bestStrSim * 0.55) + (bestTokenSim * 0.25) + (translitSim * 0.20);
-  return { finalScore, masterAm, masterEn, strSimAm };
+     const tgSimAm = appAm && masterAm ? trigramDiceSimilarity(getTrigrams(appAm), getTrigrams(masterAm)) : 0;
+     const tgSimEn = appEn && masterEn ? trigramDiceSimilarity(getTrigrams(appEn), getTrigrams(masterEn)) : 0;
+     const bestTgSim = Math.max(tgSimAm, tgSimEn);
+
+     const translitSim = appTranslit && masterTranslit ? levenshteinSimilarity(appTranslit, masterTranslit) : 0;
+
+     // 1. Exact Match Rule
+     if (bestStrSim === 100) {
+       return { finalScore: 100, masterAm, masterEn, strSimAm };
+     }
+
+     // 2. Transposed/Reordered Exact Match
+     if (bestTokenSim === 100) {
+       return { finalScore: 98, masterAm, masterEn, strSimAm }; // Almost exact match
+     }
+
+     // 3. Base blended score
+     let finalScore = Math.max(
+         bestTgSim * 0.90 + translitSim * 0.10, // Trigram handles reordering, misspelling, and missing words gracefully
+         bestTokenSim > bestStrSim 
+            ? (bestTokenSim * 0.70) + (bestStrSim * 0.20) + (translitSim * 0.10)
+            : (bestStrSim * 0.55) + (bestTokenSim * 0.35) + (translitSim * 0.10)
+     );
+
+     if (bestTgSim >= 85 && bestTokenSim < 100) {
+         finalScore = Math.max(finalScore, bestTgSim);
+     }
+
+     // Check Subset Match
+     if (bestSubsetSim === 100 && bestTokenSim < 100) {
+         finalScore = Math.max(finalScore, 85); // High baseline for full subset matching
+     }
+
+     return { finalScore, masterAm, masterEn, strSimAm };
 }
 
 export async function POST(req: NextRequest) {

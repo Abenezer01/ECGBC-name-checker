@@ -103,3 +103,32 @@ export function getTrigrams(str: string): string[] {
   }
   return result;
 }
+
+export function trigramDiceSimilarity(t1: string[], t2: string[]): number {
+  if (!t1 || !t2 || t1.length === 0 || t2.length === 0) return 0;
+  
+  let intersection = 0;
+  let t2Copy = [...t2];
+  for (let i = 0; i < t1.length; i++) {
+     const idx = t2Copy.indexOf(t1[i]);
+     if (idx !== -1) {
+        intersection++;
+        t2Copy.splice(idx, 1);
+     }
+  }
+  return (2 * intersection / (t1.length + t2.length)) * 100;
+}
+
+export function tokenSubsetSimilarity(s1: string, s2: string): number {
+  const set1 = new Set(s1.split(' ').filter(Boolean));
+  const set2 = new Set(s2.split(' ').filter(Boolean));
+  if (set1.size === 0 && set2.size === 0) return 100;
+  if (set1.size === 0 || set2.size === 0) return 0;
+
+  let intersection = 0;
+  for (const token of set1) {
+    if (set2.has(token)) intersection++;
+  }
+  const minSize = Math.min(set1.size, set2.size);
+  return (intersection / minSize) * 100;
+}
