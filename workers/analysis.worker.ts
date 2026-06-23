@@ -360,21 +360,7 @@ self.onmessage = function(e) {
        ruleFlags.push("Length mismatch (-20%)");
      }
 
-     // 6. Location Bonus / Penalty
-     const mCity = m.city ? m.city.toLowerCase().trim() : '';
-     const aCity = a.city ? a.city.toLowerCase().trim() : '';
-     // Only apply if both provided city info
-     if (mCity && aCity) {
-       if (mCity === aCity) {
-         // Same city increases duplicate risk
-         finalScore = Math.min(100, finalScore * 1.15); 
-         ruleFlags.push("Same city (+15%)");
-       } else {
-         // Different cities lower duplicate risk if they just have similar generic names
-         finalScore *= 0.85; 
-         ruleFlags.push("Different city (-15%)");
-       }
-     }
+     // 6. Location Bonus / Penalty — removed, city is no longer used in scoring
 
      // 7. Branch / Affiliate Detection
      // Check if raw names contain "branch", "ቅርንጫፍ", etc. to flag affiliated vs duplicate
@@ -390,10 +376,10 @@ self.onmessage = function(e) {
        
        if (mHasBranch !== aHasBranch) {
          ruleFlags.push("Branch / Parent relationship (Affiliate)");
-         finalScore *= 0.90; // Adjust score down since it's an affiliate, not an exact duplicate
-       } else if (mHasBranch && aHasBranch && mCity !== aCity) {
+         finalScore *= 0.90;
+       } else if (mHasBranch && aHasBranch) {
          ruleFlags.push("Different branches");
-         finalScore *= 0.75; // Explicitly different branches
+         finalScore *= 0.75;
        }
      }
 
@@ -529,7 +515,6 @@ self.onmessage = function(e) {
               matchEn: '',
               registrationId: c.candidate.certificate_no || 'N/A',
               score: c.score,
-              region: c.candidate.city || 'Unknown',
               ruleFlags: c.ruleFlags
           }));
       }
@@ -546,7 +531,6 @@ self.onmessage = function(e) {
          similarity: bestScore,
          matchType,
          registrationId: bestMatch ? bestMatch.certificate_no : 'N/A',
-         region: bestMatch ? bestMatch.city : 'Unknown',
          action: 'Pending',
          applicantName: a.applicant_name,
          submittedAt: a.submitted_at,

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useMemo } from 'react';
-import { Upload, FileUp, Settings, Activity, FileDown, CheckCircle2, AlertTriangle, ShieldCheck, Search, Filter, Download, Database, Trash2, UserPlus, Plus, Menu, X, Wifi, WifiOff, Users, Calendar, LayoutGrid, User as UserIcon, Phone, MapPin, Code } from 'lucide-react';
+import { Upload, FileUp, Settings, Activity, FileDown, CheckCircle2, AlertTriangle, ShieldCheck, Search, Filter, Download, Database, Trash2, UserPlus, Plus, Menu, X, Wifi, WifiOff, Users, Calendar, LayoutGrid, User as UserIcon, Phone, Code } from 'lucide-react';
 import { Card, Button, ProgressBar, Badge, cn } from '@/components/ui/components';
 import { parseFile, downloadCSV, downloadExcel } from '@/lib/file_parser';
 import { runAnalysisWorker } from '@/workers/analysis.worker';
@@ -88,7 +88,6 @@ export default function DashboardClient({ role }: { role: string | null }) {
   const REGISTRY_PAGE_SIZE = 100;
 
   const [singleNameInput, setSingleNameInput] = useState('');
-  const [singleCityInput, setSingleCityInput] = useState('');
   const [singleTypeInput, setSingleTypeInput] = useState('');
   const [singleNameResult, setSingleNameResult] = useState<ReportRow | null>(null);
   const [isCheckingSingle, setIsCheckingSingle] = useState(false);
@@ -108,7 +107,6 @@ export default function DashboardClient({ role }: { role: string | null }) {
      try {
          const applicant = [{
              church_name: booking.church_name_am || booking.church_name_en || '',
-             city: '',
              type: booking.category,
              applicant_name: booking.applicant_name,
              submitted_at: new Date().toISOString()
@@ -184,7 +182,6 @@ export default function DashboardClient({ role }: { role: string | null }) {
                certificate_no: String(d.certificate_no || d['certificate no'] || d.registration_id || d.file_number || '').trim(),
                certificate_issued_date: String(d.certificate_issued_date || d['certificate issued date'] || d.registration_date || '').trim(),
                country: String(d.country || d['country'] || '').trim(),
-               city: String(d.city || d['city'] || '').trim(),
                type: String(d.type || d['type'] || d.category || '').trim()
             };
          }).filter((d: any) => d.church_name);
@@ -248,7 +245,6 @@ export default function DashboardClient({ role }: { role: string | null }) {
                certificate_no: String(d.certificate_no || d['Certificate No'] || d.registration_id || d.file_number || '').trim(),
                applicant_name: String(d.applicant_name || d['የ_ተጠሪ_ሥም'] || d['የተጠሪ_ሥም'] || '').trim(),
                type: String(d.type || d.category || d['Category'] || d['የተቋም_አይነት'] || '').trim(),
-               city: String(d.city || d['City'] || d['ከተማ'] || '').trim(),
                submitted_at: new Date().toISOString()
             };
          }).filter((d: any) => d.church_name);
@@ -316,7 +312,6 @@ export default function DashboardClient({ role }: { role: string | null }) {
                certificate_no: String(d.certificate_no || d.registration_id || d['certificate_no'] || d['certificate no'] || d['file_number'] || d['file number'] || d['ተራ_ቁ'] || d.no || d.id || '').trim(),
                applicant_name: String(d.applicant_name || d['የ_ተጠሪ_ሥም'] || d['የተጠሪ_ሥም'] || '').trim(),
                type: String(d.type || d.category || d['category'] || d['የተቋም_አይነት'] || '').trim(),
-               city: String(d.city || d['City'] || d['ከተማ'] || '').trim(),
                submitted_at: new Date().toISOString()
             };
          }).filter((d: any) => d.church_name);
@@ -375,7 +370,6 @@ export default function DashboardClient({ role }: { role: string | null }) {
                certificate_no: String(d.certificate_no || d.registration_id || d['certificate_no'] || d['certificate no'] || d['file_number'] || d['file number'] || d['ተራ_ቁ'] || d.no || d.id || '').trim(),
                certificate_issued_date: String(d.certificate_issued_date || d.registration_date || d['የ_ተመዘገቡበት_ቀን'] || d['የተመዘገቡበት_ቀን'] || '').trim(),
                country: String(d.country || 'Ethiopia').trim(),
-               city: String(d.city || '').trim(),
                type: String(d.type || d.category || '').trim()
             };
          }).filter((d: any) => d.church_name);
@@ -462,7 +456,6 @@ export default function DashboardClient({ role }: { role: string | null }) {
      try {
        const applicant = [{
            church_name: singleNameInput,
-           city: singleCityInput,
            type: singleTypeInput,
            applicant_name: 'Quick Check',
            submitted_at: new Date().toISOString()
@@ -634,11 +627,10 @@ export default function DashboardClient({ role }: { role: string | null }) {
                  try {
                      const applicants = pendingBookings.map(b => ({
                          church_name: b.church_name_am || b.church_name_en || '',
-                         city: '',
                          type: b.category,
                          applicant_name: b.applicant_name,
                          submitted_at: new Date().toISOString(),
-                         _id: b.id // keep track
+                         _id: b.id
                      }));
                      
                      const results = await runAnalysisWorker(masterRecords, applicants, () => {});
@@ -715,7 +707,6 @@ export default function DashboardClient({ role }: { role: string | null }) {
                      certificate_no: '',
                      certificate_issued_date: '',
                      country: '',
-                     city: '',
                      type: b.category,
                   }]);
                   await fetchMasterRecords();
@@ -851,8 +842,7 @@ export default function DashboardClient({ role }: { role: string | null }) {
         const term = masterSearchTerm.toLowerCase();
         r = r.filter(x => 
            (x.church_name && x.church_name.toLowerCase().includes(term)) || 
-           (x.certificate_no && String(x.certificate_no).toLowerCase().includes(term)) ||
-           (x.city && x.city.toLowerCase().includes(term))
+           (x.certificate_no && String(x.certificate_no).toLowerCase().includes(term))
         );
      }
      return r;
@@ -1227,15 +1217,7 @@ export default function DashboardClient({ role }: { role: string | null }) {
                       onChange={e => setSingleNameInput(e.target.value)}
                       onKeyDown={e => { if (e.key === 'Enter') handleSingleNameCheck(); }}
                     />
-                    <div className="grid grid-cols-2 gap-3">
-                      <input
-                        type="text"
-                        className="w-full border border-slate-200 rounded-md px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-slate-400 bg-white shadow-sm"
-                        placeholder="City / Region"
-                        value={singleCityInput}
-                        onChange={e => setSingleCityInput(e.target.value)}
-                        onKeyDown={e => { if (e.key === 'Enter') handleSingleNameCheck(); }}
-                      />
+                    <div className="grid grid-cols-1 gap-3">
                       <input
                         type="text"
                         className="w-full border border-slate-200 rounded-md px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-slate-400 bg-white shadow-sm"
@@ -1611,7 +1593,7 @@ export default function DashboardClient({ role }: { role: string | null }) {
                       <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
                       <input 
                         type="text" 
-                        placeholder="Search name, reg no, city..." 
+                        placeholder="Search name, reg no..." 
                         value={masterSearchTerm}
                         onChange={(e) => {
                           setMasterSearchTerm(e.target.value);
@@ -1652,7 +1634,7 @@ export default function DashboardClient({ role }: { role: string | null }) {
                         <td className="px-6 py-3 text-slate-900 font-medium">{r.church_name}</td>
                         <td className="px-6 py-3 text-slate-500">{r.country || '-'}</td>
                         <td className="px-6 py-3 text-slate-500 capitalize">{r.type || 'church'}</td>
-                        <td className="px-6 py-3 text-slate-400 font-mono text-xs">{r.city || '-'} / {r.certificate_issued_date || '-'}</td>
+                        <td className="px-6 py-3 text-slate-400 font-mono text-xs">{r.certificate_issued_date || '-'}</td>
                       </tr>
                     ))}
                     {masterCount === 0 && (
@@ -2166,11 +2148,6 @@ export default function DashboardClient({ role }: { role: string | null }) {
                                     
                                     <div className="flex flex-wrap gap-2 mt-2 items-center">
                                        <span className="text-xs text-slate-500 font-mono bg-slate-100 px-1.5 py-0.5 rounded">ID: {cm.registrationId || 'Unknown'}</span>
-                                       {cm.region && (
-                                          <span className="text-xs text-slate-500 flex items-center gap-1">
-                                             <MapPin className="w-3 h-3"/> {cm.region}
-                                          </span>
-                                       )}
                                     </div>
                                   </div>
                                   <div className="flex flex-col items-end gap-2">

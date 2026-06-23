@@ -8,7 +8,7 @@ export type ReportRow = {
   similarity: number; // 0-100
   matchType: 'Likey Duplicate' | 'Needs Manual Review' | 'Unique';
   registrationId: string;
-  region: string;
+  region?: string;
   action: 'Pending' | 'Approved' | 'Duplicate' | 'Escalate' | 'Ignore';
   applicantName: string;
   submittedAt: string;
@@ -17,7 +17,6 @@ export type ReportRow = {
     matchEn: string;
     registrationId: string;
     score: number;
-    region: string;
     ruleFlags?: string[];
   }[];
 };
@@ -36,7 +35,6 @@ export type MasterRecord = {
   certificate_no?: string;
   certificate_issued_date?: string;
   country?: string;
-  city?: string;
   type?: string;
   created_at?: string;
 };
