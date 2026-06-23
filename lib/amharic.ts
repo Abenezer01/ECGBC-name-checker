@@ -13,9 +13,8 @@ const amharicStopwords = new Set([
   'አለም',
   'አቀፍ',
   'ኢንተርናሽናል',
-  'ሙሉ',
-  'ወንጌል',
-  'አማኞች',
+  // 'ሙሉ' and 'ወንጌል' removed — they form meaningful denomination names (e.g. ሙሉ ወንጌል)
+  // 'አማኞች' removed — it is part of org names like ሙሉ ወንጌል አማኞች
   'እምነት',
   'ቤ/ክ',
   'ቤ/ክርስቲያን',
@@ -95,7 +94,13 @@ export function normalizeAmharic(text: string): string {
   
   // Remove duplicate spaces again
   n = n.replace(/\s+/g, ' ').trim();
-  
+
+  // Guard: if everything was stripped, return the cleaned original so comparisons
+  // still have something to work with (e.g. query "ሙሉ ወንጌል" won't become "")
+  if (!n && text) {
+    n = text.replace(/[\s_]+/g, ' ').replace(/[፡፤፥-፧፨\.,!\?\/\\(\)\[\]"\'`]/g, ' ').replace(/\s+/g, ' ').trim();
+  }
+
   return n;
 }
 

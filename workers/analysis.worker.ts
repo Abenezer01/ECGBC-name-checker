@@ -63,9 +63,7 @@ self.onmessage = function(e) {
     'ዓለም',
     'አቀፍ',
     'ኢንተርናሽናል',
-    'ሙሉ',
-    'ወንጌል',
-    'አማኞች',
+    // ሙሉ, ወንጌል, አማኞች removed — meaningful denomination words
     'እምነት',
     'ቤ/ክ',
     'ቤ/ክርስቲያን',
@@ -126,7 +124,12 @@ self.onmessage = function(e) {
     
     n = n.split(/\\s+/).filter(w => !amharicStopwords.has(w)).join(' ');
     
-    return n.replace(/\\s+/g, ' ').trim();
+    // Guard: if everything was stripped, return the cleaned original
+    const result = n.replace(/\\s+/g, ' ').trim();
+    if (!result && text) {
+      return text.replace(/[\\s_]+/g, ' ').replace(/[፡፤፥-፧፨\\.,!\\?]/g, ' ').replace(/\\s+/g, ' ').trim();
+    }
+    return result;
   }
 
   const amharicToLatinMap = {
